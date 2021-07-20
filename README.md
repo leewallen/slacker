@@ -1,7 +1,7 @@
 # Swanson Service
 ***
 
-[TOC]
+[[_TOC_]]
 
 ***
 

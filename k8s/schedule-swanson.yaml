@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: swanson-cron
 spec:
-  schedule: "30 9 * * *"
+  schedule: "30 9 * * 1,5"
   successfulJobsHistoryLimit: 0
   failedJobsHistoryLimit: 0
   jobTemplate:

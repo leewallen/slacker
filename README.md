@@ -1,7 +1,19 @@
 # Swanson Service
 ***
 
-[[_TOC_]]
+**Table of Contents**
+
+* [Purpose](#purpose)
+* [Components](#components)
+    * [Service](#service)
+    * [ConfigMaps](#configmaps)
+    * [CronJobs](#cronjobs)
+    * [Service](#service)
+        * [Data Retrievers](#data-retrievers)
+            * [NASA](#nasa)
+            * [XKCD](#xkcd)
+            * [Ron Swanson](#ron-swanson)
+* [Update the Schedule](#update-the-schedule)
 
 ***
 

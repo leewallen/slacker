@@ -1,0 +1,79 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slacker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: slacker
+  template:
+    metadata:
+      labels:
+        app: slacker
+    spec:
+      containers:
+      - name: slacker
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "125m"
+          limits:
+            memory: "128Mi"
+            cpu: "250m"
+        image: leewallen/slacker:1.0
+        env:
+          - name: NASA_CHANNEL
+            valueFrom:
+              configMapKeyRef:
+                name: nasa-configmap
+                key: NASA_CHANNEL
+          - name: NASA_URL
+            valueFrom:
+              configMapKeyRef:
+                name: nasa-configmap
+                key: NASA_URL
+          - name: SLACK_URL
+            valueFrom:
+              configMapKeyRef:
+                name: slacker-configmap
+                key: SLACK_URL
+          - name: SWANSON_CHANNEL
+            valueFrom:
+              configMapKeyRef:
+                name: swanson-configmap
+                key: SWANSON_CHANNEL
+          - name: SWANSON_URL
+            valueFrom:
+              configMapKeyRef:
+                name: swanson-configmap
+                key: SWANSON_URL
+          - name: XKCD_CHANNEL
+            valueFrom:
+              configMapKeyRef:
+                name: xkcd-configmap
+                key: XKCD_CHANNEL
+          - name: XKCD_URL
+            valueFrom:
+              configMapKeyRef:
+                name: xkcd-configmap
+                key: XKCD_URL
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 15
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 5
+          timeoutSeconds: 1

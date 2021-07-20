@@ -1,0 +1,3 @@
+FROM alpine:latest@sha256:8d99168167baa6a6a0d7851b9684625df9c1455116a9601835c2127df2aaa2f5
+
+RUN apk add curl

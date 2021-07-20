@@ -1,0 +1,15 @@
+# executable
+slacker
+
+# env files
+.env
+envfile
+
+# JetBrains related config
+.idea
+
+# Go mod files
+go.sum
+
+# Miscellaneous
+.DS_Store

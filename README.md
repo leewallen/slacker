@@ -1,4 +1,4 @@
-# Swanson Service
+# Slacker Service
 ***
 
 **Table of Contents**

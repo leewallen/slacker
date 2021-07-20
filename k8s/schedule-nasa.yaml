@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: nasa-cron
 spec:
-  schedule: "* * * * *"
+  schedule: "30 9 * * *"
   successfulJobsHistoryLimit: 0
   failedJobsHistoryLimit: 0
   jobTemplate:

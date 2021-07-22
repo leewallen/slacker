@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/PaesslerAG/jsonpath"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,10 +10,11 @@ import (
 )
 
 type SwansonQuoteRetriever struct {
-	URL string
+	URL               string
+	responseProcessor ResponseProcessor
 }
 
-func (retriever *SwansonQuoteRetriever) Retrieve() (string, error) {
+func (retriever SwansonQuoteRetriever) Retrieve() (string, error) {
 	v := interface{}(nil)
 
 	response, err := http.Get(retriever.URL)
@@ -34,16 +34,7 @@ func (retriever *SwansonQuoteRetriever) Retrieve() (string, error) {
 		log.Fatal(err)
 	}
 
-	quote := retriever.GetVal("$[0]", v)
+	quote := responseProcessor.GetVal("$[0]", v)
 
 	return quote, err
-}
-
-func (retriever *SwansonQuoteRetriever) GetVal(path string, v interface{}) string {
-	val, err := jsonpath.Get(path, v)
-	if err != nil {
-		fmt.Println(err)
-		log.Fatal(err)
-	}
-	return fmt.Sprint(val)
 }

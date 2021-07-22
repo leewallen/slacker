@@ -35,6 +35,10 @@ TARGET_COLOR := $(BLUE)
 
 POUND = \#
 
+SLACKIT_VERSION = 0.0.1
+CURLIT_VERSION = 0.0.1
+
+
 .PHONY: no_targets__ info help build deploy doc
 	no_targets__: help
 
@@ -52,20 +56,20 @@ colors: ## show all the colors
 	
 build:  ## run the docker builds
 	@echo "${GREEN}Running build.${RESET}"
-	docker build -t leewallen/slacker:1.0 -f Dockerfile .
-	docker build -t leewallen/curlit:1.0 -f ScheduledDockerfile .
+	docker build -t leewallen/slackit:${SLACKIT_VERSION} -f Dockerfile .
+	docker build -t leewallen/curlit:${CURLIT_VERSION} -f ScheduledDockerfile .
 	@echo "${GREEN}Build finished.${RESET}"
 
 publish:  ## push images to Docker repository
 	@echo "${GREEN}Publishing docker images.${RESET}"
-	docker push leewallen/slacker:1.0
-	docker push leewallen/curlit:1.0
+	docker push leewallen/slackit:${SLACKIT_VERSION}
+	docker push leewallen/curlit:${CURLIT_VERSION}
 	@echo "${GREEN}Publish finished.${RESET}"
 
 deploy:  ## deploy kubernetes related resources
 	@echo "${GREEN}Deploying to k8s cluster.${RESET}"
 	env
-	kubectl create configmap slacker-configmap --from-literal=SLACK_URL="${SLACK_URL}"
+	kubectl create configmap slackit-configmap --from-literal=SLACK_URL="${SLACK_URL}"
 	kubectl create configmap swanson-configmap --from-literal=SWANSON_CHANNEL="${SWANSON_CHANNEL}" --from-literal=SWANSON_URL="${SWANSON_URL}"
 	kubectl create configmap nasa-configmap --from-literal=NASA_CHANNEL="${NASA_CHANNEL}" --from-literal=NASA_URL="${NASA_URL}"
 	kubectl create configmap xkcd-configmap --from-literal=XKCD_CHANNEL="${XKCD_CHANNEL}" --from-literal=XKCD_URL="${XKCD_URL}"
@@ -73,28 +77,28 @@ deploy:  ## deploy kubernetes related resources
 	kubectl apply -f ./k8s/schedule-nasa.yaml
 	kubectl apply -f ./k8s/schedule-xkcd.yaml
 	kubectl apply -f ./k8s/schedule-swanson.yaml
-	kubectl apply -f ./k8s/service-slacker.yaml
-	kubectl apply -f ./k8s/deployment-slacker.yaml
+	kubectl apply -f ./k8s/service-slackit.yaml
+	kubectl apply -f ./k8s/deployment-slackit.yaml
 	@echo "${GREEN}deploy finished${RESET}"
 
 delete: ## delete kubernetes related resources
 	@echo "${LIGHTPURPLE}Delete deployment.${RESET}"
-	kubectl delete configmap slacker-configmap
+	kubectl delete configmap slackit-configmap
 	kubectl delete configmap swanson-configmap
 	kubectl delete configmap nasa-configmap
 	kubectl delete configmap xkcd-configmap
-	kubectl delete -f ./k8s/service-slacker.yaml
+	kubectl delete -f ./k8s/service-slackit.yaml
 	kubectl delete -f ./k8s/schedule-swanson.yaml
 	kubectl delete -f ./k8s/schedule-nasa.yaml
 	kubectl delete -f ./k8s/schedule-xkcd.yaml
-	kubectl delete -f ./k8s/deployment-slacker.yaml
+	kubectl delete -f ./k8s/deployment-slackit.yaml
 	@echo "${LIGHTPURPLE}deployment deleted${RESET}"
 
 describe: ## describe a pod that has the app set to get-swanson-quote
-	kubectl describe pod --selector=app=slacker
+	kubectl describe pod --selector=app=slackit
 
-pods: ## get pods that have the app set to get-swanson-quote 
-	kubectl get pods --selector=app=slacker
+pods: ## get pods that have the app set to get-swanson-quote
+	kubectl get pods --selector=app=slackit
 
 help:
 	@echo "${BLACK}-----------------------------------------------------------------${RESET}"

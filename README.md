@@ -1,4 +1,4 @@
-# Slacker Service
+# Slackit Service
 ***
 
 **Table of Contents**

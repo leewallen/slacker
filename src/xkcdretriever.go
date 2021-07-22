@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/PaesslerAG/jsonpath"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,10 +10,11 @@ import (
 )
 
 type XkcdRetriever struct {
-	URL string
+	URL               string
+	responseProcessor ResponseProcessor
 }
 
-func (retriever *XkcdRetriever) Retrieve() (string, error) {
+func (retriever XkcdRetriever) Retrieve() (string, error) {
 	v := interface{}(nil)
 	response, err := http.Get(retriever.URL)
 	if err != nil {
@@ -32,24 +32,15 @@ func (retriever *XkcdRetriever) Retrieve() (string, error) {
 		log.Fatal(err)
 	}
 
-	alt := retriever.GetVal("$.alt", v)
-	title := retriever.GetVal("$.title", v)
-	img := retriever.GetVal("$.img", v)
-	year := retriever.GetVal("$.year", v)
-	month := retriever.GetVal("$.month", v)
-	day := retriever.GetVal("$.day", v)
-	num := retriever.GetVal("$.num", v)
+	alt := responseProcessor.GetVal("$.alt", v)
+	title := responseProcessor.GetVal("$.title", v)
+	img := responseProcessor.GetVal("$.img", v)
+	year := responseProcessor.GetVal("$.year", v)
+	month := responseProcessor.GetVal("$.month", v)
+	day := responseProcessor.GetVal("$.day", v)
+	num := responseProcessor.GetVal("$.num", v)
 
 	var quote = fmt.Sprintf("%s - *%s*\n%s-%s-%s\n\nAlt Text: %s\n\n%s", num, title, year, month, day, alt, img)
 
 	return quote, err
-}
-
-func (retriever *XkcdRetriever) GetVal(path string, v interface{}) string {
-	val, err := jsonpath.Get(path, v)
-	if err != nil {
-		fmt.Println(err)
-		log.Fatal(err)
-	}
-	return fmt.Sprint(val)
 }

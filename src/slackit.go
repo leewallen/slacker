@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/PaesslerAG/jsonpath"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"log"
@@ -18,19 +19,43 @@ const NasaIcon = ":nasa:"
 const XkcdUser = "XKCD"
 const XkcdIcon = ":xkcd:"
 
-var slackUrl = os.Getenv("SLACK_URL")
-var swansonUrl = os.Getenv("SWANSON_URL")
-var swansonChannel = os.Getenv("SWANSON_CHANNEL")
-var nasaUrl = os.Getenv("NASA_URL")
-var nasaChannel = os.Getenv("NASA_CHANNEL")
-var xkcdUrl = os.Getenv("XKCD_URL")
-var xkcdChannel = os.Getenv("XKCD_CHANNEL")
+var (
+	slackUrl                                       = os.Getenv("SLACK_URL")
+	swansonUrl                                     = os.Getenv("SWANSON_URL")
+	swansonChannel                                 = os.Getenv("SWANSON_CHANNEL")
+	nasaUrl                                        = os.Getenv("NASA_URL")
+	nasaChannel                                    = os.Getenv("NASA_CHANNEL")
+	xkcdUrl                                        = os.Getenv("XKCD_URL")
+	xkcdChannel                                    = os.Getenv("XKCD_CHANNEL")
+	nasaRetriever, swansonRetriever, xkcdRetriever Retriever
+	responseProcessor                              Processor
+)
 
 type slackMessage struct {
 	Channel   string `json:"channel"`
 	Username  string `json:"username"`
 	Text      string `json:"text"`
 	IconEmoji string `json:"icon_emoji"`
+}
+
+type Processor struct{}
+
+type Retriever interface {
+	Retrieve() (string, error)
+}
+
+type ResponseProcessor interface {
+	GetVal(path string, v interface{}) string
+}
+
+func (responseProcessor Processor) GetVal(path string, v interface{}) string {
+	val, err := jsonpath.Get(path, v)
+	if err != nil {
+		fmt.Println(err)
+		log.Fatal(err)
+	}
+	return fmt.Sprint(val)
+
 }
 
 func getHealthAndReadiness(w http.ResponseWriter, r *http.Request) {
@@ -46,9 +71,11 @@ func getSwansonQuote(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("getSwansonQuote : %v\n", r)
 
-	retriever := &SwansonQuoteRetriever{swansonUrl}
+	if swansonRetriever == nil {
+		swansonRetriever = SwansonQuoteRetriever{swansonUrl, responseProcessor}
+	}
 
-	quote, err := retriever.Retrieve()
+	quote, err := swansonRetriever.Retrieve()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -64,9 +91,11 @@ func getNasaApod(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("getNasaApod : %v\n", r)
 
-	retriever := &NasaApodRetriever{nasaUrl}
+	if nasaRetriever == nil {
+		nasaRetriever = NasaApodRetriever{nasaUrl, responseProcessor}
+	}
 
-	quote, err := retriever.Retrieve()
+	quote, err := nasaRetriever.Retrieve()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -82,9 +111,11 @@ func getXkcd(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("getXkcd : %v\n", r)
 
-	retriever := &XkcdRetriever{xkcdUrl}
+	if xkcdRetriever == nil {
+		xkcdRetriever = XkcdRetriever{nasaUrl, responseProcessor}
+	}
 
-	quote, err := retriever.Retrieve()
+	quote, err := xkcdRetriever.Retrieve()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -137,6 +168,6 @@ func handleRequests() {
 }
 
 func main() {
-	fmt.Println("Starting Slacker.")
+	fmt.Println("Starting Slackit.")
 	handleRequests()
 }

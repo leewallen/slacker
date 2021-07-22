@@ -5,14 +5,14 @@ COPY ./src/go.mod ./
 COPY ./src/*.go ./
 
 RUN GOOS=linux GOARCH=arm GOARM=7 go mod tidy
-RUN GOOS=linux GOARCH=arm GOARM=7 go build -o ./slacker .
+RUN GOOS=linux GOARCH=arm GOARM=7 go build -o ./slackit .
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 RUN touch CREATED.txt
 
 WORKDIR /
-COPY --from=build ./src/slacker ./
+COPY --from=build ./src/slackit ./
 EXPOSE 8080
-CMD ["./slacker"]
+CMD ["./slackit"]
 

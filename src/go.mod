@@ -1,4 +1,4 @@
-module leewallen/slacker
+module leewallen/slackit
 
 go 1.16
 

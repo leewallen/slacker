@@ -11,11 +11,11 @@ spec:
       template:
         spec:
           containers:
-          - name: xkcd-cron
-            image: leewallen/curlit:1.0
-            imagePullPolicy: Always
-            command:
-            - /bin/sh
-            - -c
-            - date; curl http://yellow:30080/xkcd
+            - name: xkcd-cron
+              image: leewallen/curlit:0.0.1
+              imagePullPolicy: Always
+              command:
+                - /bin/sh
+                - -c
+                - date; curl http://yellow:30080/xkcd
           restartPolicy: OnFailure

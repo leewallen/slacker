@@ -56,6 +56,7 @@ colors: ## show all the colors
 	
 build:  ## run the docker builds
 	@echo "${GREEN}Running build.${RESET}"
+    golint
 	docker build -t leewallen/slackit:${SLACKIT_VERSION} -f Dockerfile .
 	docker build -t leewallen/curlit:${CURLIT_VERSION} -f ScheduledDockerfile .
 	@echo "${GREEN}Build finished.${RESET}"

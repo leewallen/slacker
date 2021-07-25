@@ -27,9 +27,21 @@ var (
 	nasaChannel                                    = os.Getenv("NASA_CHANNEL")
 	xkcdUrl                                        = os.Getenv("XKCD_URL")
 	xkcdChannel                                    = os.Getenv("XKCD_CHANNEL")
+	apis										   = make(map[string]API)
+	targets										   = make(map[string][]Target)
 	nasaRetriever, swansonRetriever, xkcdRetriever Retriever
 	responseProcessor                              Processor
 )
+
+type Target struct {
+	Channel	string `json:"channel"`
+}
+
+type API struct {
+	URL string `json:"url"`
+	IconEmoji string `json:"icon_emoji"`
+	Username string `json:"username"`
+}
 
 type slackMessage struct {
 	Channel   string `json:"channel"`
@@ -48,6 +60,12 @@ type ResponseProcessor interface {
 	GetVal(path string, v interface{}) string
 }
 
+func init() {
+	apis["NASA"] = API{URL: os.Getenv("NASA_URL"), IconEmoji: NasaIcon, Username: "NASA Astronomy Picture of the Day"}
+	apis["Swanson"] = API{URL: os.Getenv("SWANSON_URL"), IconEmoji: SwansonIcon,  Username: "Ron Swanson"}
+	apis["XKCD"] = API{URL: os.Getenv("XKCD_URL"), IconEmoji: XkcdIcon,  Username: "XKCD TriWeekly Knowledge Bomb"}
+}
+
 func (responseProcessor Processor) GetVal(path string, v interface{}) string {
 	val, err := jsonpath.Get(path, v)
 	if err != nil {
@@ -55,7 +73,6 @@ func (responseProcessor Processor) GetVal(path string, v interface{}) string {
 		log.Fatal(err)
 	}
 	return fmt.Sprint(val)
-
 }
 
 func getHealthAndReadiness(w http.ResponseWriter, r *http.Request) {
@@ -65,6 +82,14 @@ func getHealthAndReadiness(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(""))
 }
 
+func sendQuoteToCaller(quote string, w http.ResponseWriter) {
+	_, err := w.Write([]byte(quote))
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Sent quote to caller.")
+}
+
 func getSwansonQuote(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -72,7 +97,7 @@ func getSwansonQuote(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("getSwansonQuote : %v\n", r)
 
 	if swansonRetriever == nil {
-		swansonRetriever = SwansonQuoteRetriever{swansonUrl, responseProcessor}
+		swansonRetriever = SwansonQuoteRetriever{apis["Swanson"].URL, responseProcessor}
 	}
 
 	quote, err := swansonRetriever.Retrieve()
@@ -80,9 +105,8 @@ func getSwansonQuote(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	w.Write([]byte(quote))
-
-	sendQuoteToSlack(quote, SwansonUser, swansonChannel, SwansonIcon)
+	sendQuoteToCaller(quote, w)
+	sendQuoteToSlack(quote, apis["Swanson"], targets["Swanson"])
 }
 
 func getNasaApod(w http.ResponseWriter, r *http.Request) {
@@ -100,9 +124,8 @@ func getNasaApod(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	w.Write([]byte(quote))
-
-	sendQuoteToSlack(quote, NasaUser, nasaChannel, NasaIcon)
+	sendQuoteToCaller(quote, w)
+	sendQuoteToSlack(quote, apis["NASA"], targets["NASA"])
 }
 
 func getXkcd(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +135,7 @@ func getXkcd(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("getXkcd : %v\n", r)
 
 	if xkcdRetriever == nil {
-		xkcdRetriever = XkcdRetriever{nasaUrl, responseProcessor}
+		xkcdRetriever = XkcdRetriever{xkcdUrl, responseProcessor}
 	}
 
 	quote, err := xkcdRetriever.Retrieve()
@@ -120,41 +143,43 @@ func getXkcd(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	w.Write([]byte(quote))
-
-	sendQuoteToSlack(quote, XkcdUser, xkcdChannel, XkcdIcon)
+	sendQuoteToCaller(quote, w)
+	sendQuoteToSlack(quote, apis["XKCD"], targets["XKCD"])
 }
 
-func sendQuoteToSlack(quote, user, channel, icon string) {
-	slackQuote := &slackMessage{
-		Channel:   channel,
-		Username:  user,
-		Text:      quote,
-		IconEmoji: icon,
+func sendQuoteToSlack(quote string, api API, targets []Target) {
+
+	for _, target := range targets {
+		slackQuote := &slackMessage{
+			Channel:   target.Channel,
+			Username:  api.Username,
+			Text:      quote,
+			IconEmoji: api.IconEmoji,
+		}
+
+		fmt.Printf("sendQuoteToSlack : %v\n", slackQuote)
+
+		slackQuoteJson, err := json.Marshal(slackQuote)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		req, err := http.NewRequest("POST", slackUrl, bytes.NewBuffer(slackQuoteJson))
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			panic(err)
+		}
+
+		responseData, err := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("Response: %s\n", responseData)
 	}
-
-	fmt.Printf("sendQuoteToSlack : %v\n", slackQuote)
-
-	slackQuoteJson, err := json.Marshal(slackQuote)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	req, err := http.NewRequest("POST", slackUrl, bytes.NewBuffer(slackQuoteJson))
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
-	}
-
-	responseData, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("Response: %s\n", responseData)
 }
 
 func handleRequests() {

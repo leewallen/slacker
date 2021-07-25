@@ -15,7 +15,6 @@ type XkcdRetriever struct {
 }
 
 func (retriever XkcdRetriever) Retrieve() (string, error) {
-	v := interface{}(nil)
 	response, err := http.Get(retriever.URL)
 	if err != nil {
 		fmt.Print(err.Error())
@@ -26,6 +25,8 @@ func (retriever XkcdRetriever) Retrieve() (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	v := interface{}(nil)
 
 	err = json.Unmarshal(responseBody, &v)
 	if err != nil {

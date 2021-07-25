@@ -15,8 +15,6 @@ type SwansonQuoteRetriever struct {
 }
 
 func (retriever SwansonQuoteRetriever) Retrieve() (string, error) {
-	v := interface{}(nil)
-
 	response, err := http.Get(retriever.URL)
 
 	if err != nil {
@@ -28,6 +26,8 @@ func (retriever SwansonQuoteRetriever) Retrieve() (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	v := interface{}(nil)
 
 	err = json.Unmarshal(responseData, &v)
 	if err != nil {

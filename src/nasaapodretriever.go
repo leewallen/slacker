@@ -17,8 +17,6 @@ type NasaApodRetriever struct {
 func (retriever NasaApodRetriever) Retrieve() (string, error) {
 	fmt.Println("NasaApodRetriever: Entering Retrieve method")
 
-	v := interface{}(nil)
-
 	fmt.Println("NasaApodRetriever: Calling url")
 	response, err := http.Get(retriever.URL)
 	if err != nil {
@@ -31,6 +29,8 @@ func (retriever NasaApodRetriever) Retrieve() (string, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	v := interface{}(nil)
 
 	fmt.Println("NasaApodRetriever: Unmarshalling response from url")
 	err = json.Unmarshal(responseBody, &v)

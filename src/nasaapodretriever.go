@@ -1,53 +1,29 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
-	"os"
 )
 
+// NasaApodRetriever is used to get the api content, and format the response
 type NasaApodRetriever struct {
-	URL               string
-	responseProcessor ResponseProcessor
+	URL     string
+	slackit Slackit
 }
 
+// Retrieve the response from the api endpoint and return a formatted response, or and error.
 func (retriever NasaApodRetriever) Retrieve() (string, error) {
 	fmt.Println("NasaApodRetriever: Entering Retrieve method")
-
-	v := interface{}(nil)
-
-	fmt.Println("NasaApodRetriever: Calling url")
-	response, err := http.Get(retriever.URL)
-	if err != nil {
-		fmt.Print(err.Error())
-		os.Exit(1)
-	}
-
-	fmt.Println("NasaApodRetriever: Reading response from url")
-	responseBody, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("NasaApodRetriever: Unmarshalling response from url")
-	err = json.Unmarshal(responseBody, &v)
+	v, err := slackit.Get(retriever.URL)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println("NasaApodRetriever: Getting values from response")
-	date := responseProcessor.GetVal("$.date", v)
-	copyright := responseProcessor.GetVal("$.copyright", v)
-	explanation := responseProcessor.GetVal("$.explanation", v)
-	title := responseProcessor.GetVal("$.title", v)
-	url := responseProcessor.GetVal("$.url", v)
+	date := slackit.GetVal("$.date", v)
+	explanation := slackit.GetVal("$.explanation", v)
+	title := slackit.GetVal("$.title", v)
+	hdurl := slackit.GetVal("$.hdurl", v)
 
-	fmt.Println("NasaApodRetriever: Formatting quote")
-	var quote = fmt.Sprintf("*%s*\nCopyright %s\n%s\n\n%s\n\n%s", title, copyright, date, explanation, url)
-
-	fmt.Println("NasaApodRetriever: Returning quote")
-	return quote, err
+	return fmt.Sprintf("> *%s - %s*\n> \n> %s\n\n%s", date, title, explanation, hdurl), err
 }

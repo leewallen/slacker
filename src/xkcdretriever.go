@@ -1,46 +1,29 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
-	"os"
 )
 
+// XkcdRetriever is used to get the api content, and format the response.
 type XkcdRetriever struct {
-	URL               string
-	responseProcessor ResponseProcessor
+	URL     string
+	slackit Slackit
 }
 
+// Retrieve the response from the api endpoint and return a formatted response, or and error.
 func (retriever XkcdRetriever) Retrieve() (string, error) {
-	v := interface{}(nil)
-	response, err := http.Get(retriever.URL)
-	if err != nil {
-		fmt.Print(err.Error())
-		os.Exit(1)
-	}
-
-	responseBody, err := ioutil.ReadAll(response.Body)
+	v, err := slackit.Get(retriever.URL)
 	if err != nil {
 		log.Fatal(err)
 	}
+	alt := slackit.GetVal("$.alt", v)
+	title := slackit.GetVal("$.title", v)
+	img := slackit.GetVal("$.img", v)
+	year := slackit.GetVal("$.year", v)
+	month := slackit.GetVal("$.month", v)
+	day := slackit.GetVal("$.day", v)
+	num := slackit.GetVal("$.num", v)
 
-	err = json.Unmarshal(responseBody, &v)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	alt := responseProcessor.GetVal("$.alt", v)
-	title := responseProcessor.GetVal("$.title", v)
-	img := responseProcessor.GetVal("$.img", v)
-	year := responseProcessor.GetVal("$.year", v)
-	month := responseProcessor.GetVal("$.month", v)
-	day := responseProcessor.GetVal("$.day", v)
-	num := responseProcessor.GetVal("$.num", v)
-
-	var quote = fmt.Sprintf("%s - *%s*\n%s-%s-%s\n\nAlt Text: %s\n\n%s", num, title, year, month, day, alt, img)
-
-	return quote, err
+	return fmt.Sprintf("%s - *%s*\n%s-%s-%s\n\nAlt Text: %s\n\n%s", num, title, year, month, day, alt, img), err
 }

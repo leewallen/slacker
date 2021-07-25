@@ -25,5 +25,5 @@ func (retriever XkcdRetriever) Retrieve() (string, error) {
 	day := slackit.GetVal("$.day", v)
 	num := slackit.GetVal("$.num", v)
 
-	return fmt.Sprintf("%s - *%s*\n%s-%s-%s\n\nAlt Text: %s\n\n%s", num, title, year, month, day, alt, img), err
+	return fmt.Sprintf("> *Comic %s - \"%s\"*\n> %s-%s-%s\n> \n> Alt Text: %s\n\n%s", num, title, year, month, day, alt, img), err
 }

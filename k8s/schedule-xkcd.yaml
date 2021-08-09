@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: xkcd-cron
 spec:
-  schedule: "30 9 * * 1,3,5"
+  schedule: "30 12 * * 1,3,5"
   successfulJobsHistoryLimit: 0
   failedJobsHistoryLimit: 0
   jobTemplate:
